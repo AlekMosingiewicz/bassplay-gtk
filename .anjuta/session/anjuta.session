@@ -1,0 +1,30 @@
+[Anjuta]
+Maximized=1
+Geometry=1364x718+0+0
+
+[File Loader]
+Files=../../src/helper_funcs.c#166
+
+[Document Manager]
+bookmarks=<?xml version="1.0" encoding="UTF-8"?>\n<bookmarks/>\n
+
+[Execution]
+Program uri=../../src/bassplay_gtk
+Run in terminal=2
+Working directories=../../../bassplay
+
+[Project Manager]
+Shortcut=bassplay
+Expand=bassplay%%%bassplay//src%%%bassplay//src//bassplay_gtk%%%bassplay//src//ui%%%bassplay//bassplay_gtkdoc
+
+[Build]
+Configuration list=1:Default:%%%1:Debug:Debug%%%1:Profiling:Profiling%%%1:Optimized:Optimized
+Selected Configuration=Debug
+BuildArgs/Default=--enable-maintainer-mode
+BuildArgs/Debug=\s'CFLAGS=-g -O0' 'CXXFLAGS=-g -O0' 'JFLAGS=-g -O0' 'FFLAGS=-g -O0'
+BuildArgs/Profiling=--enable-maintainer-mode 'CFLAGS=-g -pg' 'CXXFLAGS=-g -pg' 'JFLAGS=-g -pg' 'FFLAGS=-g -pg'
+BuildArgs/Optimized=--enable-maintainer-mode 'CFLAGS=-O2' 'CXXFLAGS=-O2' 'JFLAGS=-O2' 'FFLAGS=-O2'
+
+[Debugger]
+Breakpoint=1:../../src/helper_funcs.c:161:0:
+Stop at beginning=2

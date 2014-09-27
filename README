@@ -1,0 +1,8 @@
+BASS Library is needed to build the project
+(http://www.un4seen.com/download.php?bass24-linux).
+
+BASS library is free only for non-commercial use - anyone who wants to create a
+commercial derivative of the project needs to purchase a license from Un4Seen
+Developments (http://www.un4seen.com/).
+
+After installation run by typing bassplay_gtk in the command line.
