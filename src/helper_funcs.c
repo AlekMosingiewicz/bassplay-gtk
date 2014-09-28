@@ -280,7 +280,7 @@ init_variables ()
 		        SESSION_DATA_FILE);
    update_thread = 0;
    playback_volume = -1;
-}
+} 
 
 void
 populate_general_info_window ()
