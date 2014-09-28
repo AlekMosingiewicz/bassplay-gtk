@@ -200,6 +200,7 @@ update_label_text (char *playback_state)
 	title_label = GTK_LABEL(gtk_builder_get_object (builder,
 	                                                "titlelabel"));
 	song_title = BASS_ChannelGetTags(music,BASS_TAG_MUSIC_NAME);
+	if(song_title!=NULL)
 	if((!strlen(song_title))&&(actual_file_name != NULL)) 
 		song_title = actual_file_name;
 	sprintf(message, "%s: %s", playback_state, song_title);

@@ -3,19 +3,18 @@ Maximized=1
 Geometry=1364x718+0+0
 
 [File Loader]
-Files=../../src/helper_funcs.c#166
+Files=../../src/helper_funcs.c#75%%%../../src/play.c#15
 
 [Document Manager]
 bookmarks=<?xml version="1.0" encoding="UTF-8"?>\n<bookmarks/>\n
+
+[Project Manager]
+Expand=bassplay%%%bassplay//src%%%bassplay//src//bassplay_gtk%%%bassplay//src//ui%%%bassplay//bassplay_gtkdoc
 
 [Execution]
 Program uri=../../src/bassplay_gtk
 Run in terminal=2
 Working directories=../../../bassplay
-
-[Project Manager]
-Shortcut=bassplay
-Expand=bassplay%%%bassplay//src%%%bassplay//src//bassplay_gtk%%%bassplay//src//ui%%%bassplay//bassplay_gtkdoc
 
 [Build]
 Configuration list=1:Default:%%%1:Debug:Debug%%%1:Profiling:Profiling%%%1:Optimized:Optimized
