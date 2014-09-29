@@ -220,7 +220,7 @@ setup_music_slider ()
 	DWORD length;
 	float length_sec;
 
-	slider = gtk_builder_get_object (builder, "songslider");
+	slider = (GtkWidget*) gtk_builder_get_object (builder, "songslider");
 	if(song_length_adjustment !=NULL)
 	{
 		gtk_object_destroy (song_length_adjustment);
@@ -312,7 +312,7 @@ void
 populate_sample_view()
 {
 	char *sample;
-	char* sample_text = malloc(1024); // -> allocating the sample text in the stack frame
+	char* sample_text = malloc(1024*5); // -> allocating the sample text in the stack frame
 	int  n=0;                                             // caused segmentation fault errors, so I moved 
 	char*  position=sample_text;          // it to the heap
 

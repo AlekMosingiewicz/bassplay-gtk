@@ -73,7 +73,6 @@ choose_and_begin_playback (char *filename)
 		BASS_ChannelSetSync(music, BASS_SYNC_END, 0, &on_music_end, NULL);
 		return TRUE;
 	}
-	else 
 	return -1;
 }
 
@@ -221,7 +220,7 @@ setup_music_slider ()
 	DWORD length;
 	float length_sec;
 
-	slider = gtk_builder_get_object (builder, "songslider");
+	slider = (GtkWidget*) gtk_builder_get_object (builder, "songslider");
 	if(song_length_adjustment !=NULL)
 	{
 		gtk_object_destroy (song_length_adjustment);
@@ -281,7 +280,7 @@ init_variables ()
 		        SESSION_DATA_FILE);
    update_thread = 0;
    playback_volume = -1;
-}
+} 
 
 void
 populate_general_info_window ()
