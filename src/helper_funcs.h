@@ -22,6 +22,8 @@ void  populate_message_text_view();
 void  populate_sample_view ();
 GtkWindow* get_info_window();
 static void  populate_text_view(char *id, char *text);
+static GtkFileFilter* create_standard_mod_filter();
+static GtkFileFilter* create_generic_file_filter();
 
 /** Playback data related functions **/
 void mins_from_secs(float secs, char *ret);

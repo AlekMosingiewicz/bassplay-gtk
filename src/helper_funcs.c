@@ -18,6 +18,8 @@ get_filename()
 {
 	char *filename;
 	char *cpfilename = NULL;
+	GtkFileFilter *filter = create_standard_mod_filter ();
+	GtkFileFilter *generic_filter = create_generic_file_filter ();
 	
 	GtkWidget* filedialog = gtk_file_chooser_dialog_new
 							("Choose the music module",
@@ -27,6 +29,9 @@ get_filename()
 	                          GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
 	                          NULL);
 
+	gtk_file_chooser_add_filter(filedialog, filter);
+	gtk_file_chooser_add_filter (filedialog, generic_filter);
+	
 	if ( basedir != NULL )
 		gtk_file_chooser_set_current_folder (GTK_FILE_CHOOSER(filedialog),
 			                                     basedir);
@@ -46,6 +51,36 @@ get_filename()
 	if(cpfilename != NULL) 
 		g_free(cpfilename);
 	return filename;
+}
+
+/***************************************************
+   Create standard module file filter
+ **************************************************/
+
+static GtkFileFilter* 
+create_standard_mod_filter()
+{
+	GtkFileFilter *filter = gtk_file_filter_new();
+	gtk_file_filter_add_pattern (filter, "*.it");
+	gtk_file_filter_add_pattern (filter, "*.mo3");
+	gtk_file_filter_add_pattern (filter, "*.mod");
+	gtk_file_filter_add_pattern (filter, "*.s3m");
+	gtk_file_filter_add_pattern (filter, "*.xm");
+	gtk_file_filter_set_name(filter, "Supported mod formats.");
+	return filter;
+}
+
+/*********************************************
+  Create a standard file filter
+ ********************************************/
+
+static GtkFileFilter*
+create_generic_file_filter ()
+{
+	GtkFileFilter *filter = gtk_file_filter_new();
+	gtk_file_filter_add_pattern(filter, "*.*");
+	gtk_file_filter_set_name(filter, "All file formats");
+	return filter;
 }
 
 /***************************************************
