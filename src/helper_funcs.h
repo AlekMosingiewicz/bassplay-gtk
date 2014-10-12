@@ -24,6 +24,10 @@ GtkWindow* get_info_window();
 static void  populate_text_view(char *id, char *text);
 static GtkFileFilter* create_standard_mod_filter();
 static GtkFileFilter* create_generic_file_filter();
+gboolean check_file_exists(char *filename);
+
+/** Playback control related functions **/
+void loop_playback();
 
 /** Playback data related functions **/
 void mins_from_secs(float secs, char *ret);
@@ -43,6 +47,7 @@ int           setup_session();
 char*         get_home_dir();
 int           check_if_session_data_is_empty();
 void          handle_session_data_on_exit();
+gboolean   validate_session_data(char *message_buffer);
 
 /** Multithreading **/
 

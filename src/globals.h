@@ -62,6 +62,7 @@ pthread_t update_thread;
 float playback_volume;
 float playback_speed;
 int playback_in_progress;
+gboolean playback_loop;
 
 /****************************
  Playback data

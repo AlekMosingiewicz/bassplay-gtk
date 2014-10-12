@@ -309,6 +309,7 @@ init_variables ()
    song_length_adjustment = NULL;
    file_being_played = NULL;
    actual_file_name = NULL;
+   playback_loop = FALSE;
    if(setup_session () < 0)
 		fprintf(stderr, "Can't find session data file;"
 		        "path to resource:%s/%s", SESSION_DATA_DIR,
@@ -427,6 +428,20 @@ populate_module_info_window()
 	populate_sample_view ();
 	populate_message_text_view ();
 }
+
+/*************************************
+ Restart the playback (for instance when
+ playing in the loop)
+ ************************************/
+void
+restart_playback()
+{
+	BASS_ChannelSetPosition(music, MAKELONG(0,0), BASS_POS_MUSIC_ORDER|
+	                   BASS_MUSIC_POSRESET);
+	update_position_slider ();
+	update_time_label (0);
+	BASS_ChannelPlay(music, FALSE);
+}
 	
 
 /**************************************
@@ -469,6 +484,18 @@ show_info_quick (char* message, GtkMessageType type)
 	gtk_widget_destroy(messagedialog);
 	
 }
+
+/************************************
+ Check if file exitsts under a given path
+ ***********************************/ 
+gboolean
+check_file_exists (char *filename)
+{
+	struct stat file;
+	int status = stat(filename, &file);
+	if(status == 0) return TRUE;
+	return FALSE;
+}
  
 /**************************************
  Save session data (preferably) at exit
@@ -509,6 +536,34 @@ get_filesize(FILE *file)
 	rewind(file);
 	
 	return filesize;
+}
+
+/*****************************************
+ Validate if the data stored in session is
+ correct. If a pointer to error message is set,
+ the error message is stored in the buffer
+ *****************************************/
+gboolean
+validate_session_data(char *message_buffer)
+{
+	char fullpath[256];
+	char local_msg[256] = "\0";
+	
+	gboolean status = TRUE;	
+	sprintf(fullpath, "%s/%s", basedir, file_being_played);
+
+	if(!check_file_exists (fullpath))
+	{
+		sprintf(local_msg, "Error opening file");
+		status = FALSE;
+	}
+
+	if((status == FALSE) && (strlen(local_msg) > 0) && (message_buffer != NULL) )
+	   {
+		   sprintf(message_buffer, "%s", local_msg);
+	   }
+	
+	return status;
 }
 
 /**********************************

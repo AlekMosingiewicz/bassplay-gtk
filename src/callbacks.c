@@ -154,16 +154,29 @@ on_label_click (GtkWidget *widget, gpointer data)
 	gtk_widget_show_all(info_window);
 }
 
+void
+on_loop_toggled(GtkWidget *widget, gpointer data)
+{
+	GtkCheckButton *button = (GtkCheckButton*) widget; 
+	gboolean toggled = gtk_toggle_button_get_active (button);
+	playback_loop = toggled;
+}
+
 /* BASS callbacks */
 
 /** This one is called whenever the playback reaches an end **/
 void 
 CALLBACK on_music_end(HSYNC hmusic, DWORD channel, DWORD data, void *user)
 {
-	stop_playback (music);
-	update_position_slider ();
-	update_label_text (PLAYBACK_STATE_STOPPED);
-	update_time_label (0);
+	if(!playback_loop)
+	{
+			stop_playback (music);
+			update_position_slider ();
+			update_label_text (PLAYBACK_STATE_STOPPED);
+			update_time_label (0);
+	}
+	else
+		restart_playback ();
 }
 
 /** Change the slider position **/

@@ -37,6 +37,7 @@ void on_slider_change (GtkRange *widget, GtkScrollType scroll, gdouble value,
                        gpointer user_data);
 gboolean on_slider_release(GtkWidget *widget, gpointer data);
 void on_label_click(GtkWidget *widget,gpointer data);
+void on_loop_toggled(GtkWidget *widget, gpointer data);
 
 /* BASS callbacks */
 
