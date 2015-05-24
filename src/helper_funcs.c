@@ -106,8 +106,10 @@ choose_and_begin_playback (char *filename)
 		if(playback_volume > -1)
 			BASS_ChannelSetAttribute(music, BASS_ATTRIB_VOL, playback_volume);
 		BASS_ChannelSetSync(music, BASS_SYNC_END, 0, &on_music_end, NULL);
+		handle_history_on_open (music, filename);
 		return TRUE;
 	}
+	
 	return -1;
 }
 
@@ -308,6 +310,7 @@ init_variables ()
    update_thread = NULL;	
    song_length_adjustment = NULL;
    file_being_played = NULL;
+   init_history_on_startup ();
    actual_file_name = NULL;
    playback_loop = FALSE;
    if(setup_session () < 0)
@@ -395,6 +398,59 @@ populate_message_text_view ()
 		populate_text_view ("moduleinfo_message_textview", message_text);
 	else populate_text_view ("moduleinfo_message_textview", "No message.");
 	
+}
+
+void
+handle_history_on_open (HMUSIC music, const char *path)
+{
+	const char *song_title = (const char*)
+				BASS_ChannelGetTags(music,BASS_TAG_MUSIC_NAME);
+	append_history_data (song_title, path);
+}
+
+/*****************************************
+ Append the song to playback history
+ ****************************************/ 
+
+void
+append_history_data(const char *name, const char *path)
+{
+	song_entry *entry = song_entry_new (name, path);
+	song_list_append(history, entry);
+	if(history->count >= MAX_HISTORY_SIZE)
+	{
+		song_entry_destroy(history->entries[MAX_HISTORY_SIZE + 1]);
+		history->entries[MAX_HISTORY_SIZE + 1] = NULL;
+		history->count--;
+	}
+}
+
+GtkWidget*
+get_file_menu()
+{
+	if(file_menu == NULL)
+		file_menu = gtk_builder_get_object (builder, "mainmenu");
+	return file_menu;
+}
+
+/**
+ * Render the history positions in the submenu
+ */  
+void history_render_menu()
+{
+	int i;
+	GtkMenu *menu = (GtkMenu*) get_file_menu ();
+	if(history->count > 0)
+	{
+		for(i = 0; i < history->count; i++)
+		{
+			song_entry *entry = history->entries[i];
+			GtkMenuItem *item = gtk_menu_item_new_with_label (entry->name);
+			gtk_menu_append(menu, item);
+		}
+	}
+
+	gtk_widget_show_all (menu);
 }
 
 /**********************************
@@ -485,6 +541,8 @@ show_info_quick (char* message, GtkMessageType type)
 	
 }
 
+
+
 /************************************
  Check if file exitsts under a given path
  ***********************************/ 
@@ -536,6 +594,48 @@ get_filesize(FILE *file)
 	rewind(file);
 	
 	return filesize;
+}
+
+/*****************************************
+ * Save the history while leaving the application
+ *****************************************/
+void
+save_history_on_exit ()
+{
+	FILE *histfile;
+	char destpath[256];
+	char history_string[5048];
+	char* home_dir = get_home_dir ();
+	if(history->count > 0)
+	{
+		song_list_to_string (history, history_string);
+		sprintf(destpath, "%s/%s", home_dir, HISTORY_FILE);
+		printf("Saving history at: %s", destpath);
+		histfile = fopen(destpath, "w");
+		fprintf(histfile, "%s", history_string);
+		fclose(histfile);
+	}
+}
+
+/***********************
+ * Read contents of a file
+ ***********************/ 
+char* read_file(char *path)
+{
+	char *out = NULL;
+	int filesize;
+	FILE *f;
+
+	if(check_file_exists (path))
+	{
+		f = fopen(path, "rb");
+		filesize = get_filesize (f);
+		out = (char*) g_malloc(filesize);
+		fread(out, sizeof(char), filesize, f);
+		fclose(f);
+	}
+
+	return out;
 }
 
 /*****************************************
@@ -644,6 +744,39 @@ get_filename_from_path (char *path)
 		tmp = strtok(NULL, "/");
 	}
 	return actual_filename;
+}
+
+
+
+/************************************
+ * Read history data when starting up
+ * the application
+ ***********************************/ 
+void
+init_history_on_startup ()
+{
+	char *home_dir = get_home_dir ();
+	char full_path[256];
+	char *history_string = NULL;
+	
+	sprintf(full_path, "%s/%s", home_dir, HISTORY_FILE);
+
+	if(check_file_exists (full_path))
+	{
+		history_string = read_file (full_path);
+		if(history_string != NULL)
+		{
+			history = song_list_from_string (history_string);
+		}
+
+		g_free(history_string);
+	}
+
+	else
+	{
+		history = song_list_new (MAX_HISTORY_SIZE);		
+	}
+
 }
 
 /******************************
