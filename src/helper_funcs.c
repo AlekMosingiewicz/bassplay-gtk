@@ -429,7 +429,7 @@ GtkWidget*
 get_file_menu()
 {
 	if(file_menu == NULL)
-		file_menu = gtk_builder_get_object (builder, "mainmenu");
+		file_menu = gtk_builder_get_object (builder, "file_menu");
 	return file_menu;
 }
 
@@ -446,6 +446,7 @@ void history_render_menu()
 		{
 			song_entry *entry = history->entries[i];
 			GtkMenuItem *item = gtk_menu_item_new_with_label (entry->name);
+			g_signal_connect(item, "activate", G_CALLBACK(on_history_item_selected), (gpointer) entry);
 			gtk_menu_append(menu, item);
 		}
 	}

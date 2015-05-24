@@ -82,7 +82,7 @@ create_window (void)
 	/* This is important */
 	gtk_builder_connect_signals (builder, NULL);
 	window = GTK_WIDGET (gtk_builder_get_object (builder, "window"));
-
+	history_render_menu ();
 	
 	return window;
 }

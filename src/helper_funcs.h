@@ -15,6 +15,7 @@ void  update_label_text (char*);
 void  setup_music_slider ();
 void  init_variables();
 char* get_filename_from_path(char *path);
+char* read_file(char *path);
 size_t get_filesize(FILE *file);
 void  populate_module_info_window();
 void  populate_general_info_window();
@@ -37,6 +38,14 @@ void update_time_label(float);
 /** GUI-related functions **/
 
 void show_info_quick(char* message, GtkMessageType type); //gtk dialog wrapper
+GtkWidget* get_file_menu();
+
+/** History-related functions **/
+void handle_history_on_open(HMUSIC music, const char *path);
+void append_history_data(const char *name, const char *path);
+void save_history_on_exit();
+void init_history_on_startup();
+void history_render_menu();
 
 /** Functions related to saving and retrieving
     the session data **/

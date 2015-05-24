@@ -51,6 +51,7 @@ void
 on_menu_exit_click (GtkWidget* widget, gpointer data)
 {
 	handle_session_data_on_exit ();
+	save_history_on_exit ();
 	gtk_main_quit();
 }
 
@@ -101,6 +102,14 @@ on_pause_button_click (GtkWidget* widget, gpointer data)
 		pause_playback(music);
 		update_label_text (PLAYBACK_STATE_PAUSED);
 	}
+}
+
+void
+on_history_item_selected(GtkWidget *widget, gpointer data)
+{
+	song_entry *item = (song_entry*) data;
+	char *path = item->path;
+	choose_and_begin_playback (path);
 }
 
 

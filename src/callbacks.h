@@ -39,6 +39,8 @@ gboolean on_slider_release(GtkWidget *widget, gpointer data);
 void on_label_click(GtkWidget *widget,gpointer data);
 void on_loop_toggled(GtkWidget *widget, gpointer data);
 
+void on_history_item_selected(GtkWidget *widget, gpointer data);
+
 /* BASS callbacks */
 
 void CALLBACK on_music_end(HSYNC hmusic, DWORD channel, DWORD data, void *user);
