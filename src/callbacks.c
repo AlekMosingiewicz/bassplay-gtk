@@ -109,7 +109,7 @@ on_history_item_selected(GtkWidget *widget, gpointer data)
 {
 	song_entry *item = (song_entry*) data;
 	char *path = item->path;
-	choose_and_begin_playback (path);
+	command_line_play (path);
 }
 
 

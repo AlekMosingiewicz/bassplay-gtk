@@ -46,6 +46,7 @@ void append_history_data(const char *name, const char *path);
 void save_history_on_exit();
 void init_history_on_startup();
 void history_render_menu();
+void history_clear_menu();
 
 /** Functions related to saving and retrieving
     the session data **/

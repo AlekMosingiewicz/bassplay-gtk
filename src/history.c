@@ -37,9 +37,10 @@ song_entry_new(const char *name, const char *path)
 void
 song_entry_destroy (song_entry *entry)
 {
-	free(entry->name);
-	free(entry->path);
-	free(entry);
+	if(entry == NULL || entry->name == NULL || entry->path == NULL) return;
+	g_free(entry->name);
+	g_free(entry->path);
+	g_free(entry);
 }
 
 /********************************************************
@@ -77,7 +78,9 @@ song_list_append (song_list *list, song_entry *entry)
 	if(list == NULL) return;
 	if(entry == NULL) return;
 
-	song_list_resize_if_needed (list);
+	//song_list_resize_if_needed (list);
+	if(list->count > MAX_HISTORY_SIZE)
+		list->count = 0;
 	
 	list->entries[list->count] = entry;
 	list->count++;

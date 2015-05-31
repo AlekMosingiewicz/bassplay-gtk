@@ -106,7 +106,7 @@ choose_and_begin_playback (char *filename)
 		if(playback_volume > -1)
 			BASS_ChannelSetAttribute(music, BASS_ATTRIB_VOL, playback_volume);
 		BASS_ChannelSetSync(music, BASS_SYNC_END, 0, &on_music_end, NULL);
-		handle_history_on_open (music, filename);
+		handle_history_on_open (music, filename);		
 		return TRUE;
 	}
 	
@@ -406,6 +406,7 @@ handle_history_on_open (HMUSIC music, const char *path)
 	const char *song_title = (const char*)
 				BASS_ChannelGetTags(music,BASS_TAG_MUSIC_NAME);
 	append_history_data (song_title, path);
+	history_render_menu ();
 }
 
 /*****************************************
@@ -417,12 +418,6 @@ append_history_data(const char *name, const char *path)
 {
 	song_entry *entry = song_entry_new (name, path);
 	song_list_append(history, entry);
-	if(history->count >= MAX_HISTORY_SIZE)
-	{
-		song_entry_destroy(history->entries[MAX_HISTORY_SIZE + 1]);
-		history->entries[MAX_HISTORY_SIZE + 1] = NULL;
-		history->count--;
-	}
 }
 
 GtkWidget*
@@ -436,10 +431,12 @@ get_file_menu()
 /**
  * Render the history positions in the submenu
  */  
-void history_render_menu()
+void 
+history_render_menu()
 {
 	int i;
 	GtkMenu *menu = (GtkMenu*) get_file_menu ();
+	history_clear_menu ();
 	if(history->count > 0)
 	{
 		for(i = history->count-1; i > 0; i--)
@@ -448,11 +445,33 @@ void history_render_menu()
 			GtkMenuItem *item = gtk_menu_item_new_with_label (entry->name);
 			g_signal_connect(item, "activate", G_CALLBACK(on_history_item_selected), (gpointer) entry);
 			gtk_menu_append(menu, item);
+			history_item_handles[i] = item;
 		}
 	}
 
 	gtk_widget_show_all (menu);
 }
+
+/************************************
+ * Clear the history items from the menu
+ ***********************************/ 
+void
+history_clear_menu()
+{
+	int i;
+	GtkMenu *menu = (GtkMenu*) get_file_menu ();	
+	for(i = 0; i < MAX_HISTORY_SIZE; i++)
+	{
+		GtkMenuItem *item = history_item_handles[i];
+		if(item != NULL)
+		{
+			gtk_container_remove(menu, item);
+			gtk_widget_destroy(item);
+		}
+	}
+	
+}
+	
 
 /**********************************
  Populate any given GTK text view
@@ -609,9 +628,9 @@ save_history_on_exit ()
 	char* home_dir = get_home_dir ();
 	if(history->count > 0)
 	{
-		song_list_to_string (history, history_string, 0);
+		song_list_to_string (history, history_string, 1);
 		sprintf(destpath, "%s/%s", home_dir, HISTORY_FILE);
-		printf("Saving history at: %s", destpath);
+		printf("Saving history at: %s\n", destpath);
 		histfile = fopen(destpath, "w");
 		fprintf(histfile, "%s", history_string);
 		fclose(histfile);

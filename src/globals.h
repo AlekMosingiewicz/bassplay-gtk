@@ -7,15 +7,16 @@
 #include <gtk/gtk.h>
 #include "play.h"
 #include "bassplay_threads.h"
+#include "history.h"
 
 /*****************************
  UI Files
  ****************************/
 
-#define UI_FILE PACKAGE_DATA_DIR "/ui/bassplay_gtk.ui"
-//#define UI_FILE "src/bassplay_gtk.ui"
-//#define MODULEINFO_UI_FILE "src/module_info.ui"
-#define MODULEINFO_UI_FILE PACKAGE_DATA_DIR "/ui/module_info.ui"
+//#define UI_FILE PACKAGE_DATA_DIR "/ui/bassplay_gtk.ui"
+#define UI_FILE "src/bassplay_gtk.ui"
+#define MODULEINFO_UI_FILE "src/module_info.ui"
+//#define MODULEINFO_UI_FILE PACKAGE_DATA_DIR "/ui/module_info.ui"
 
 /*****************************
  Playback states
@@ -41,6 +42,13 @@
 #define SESSION_BASEDIR_SIZE 256
 #define SESSION_FILENAME_SIZE 256
 
+/*******************************
+ Default parameters for storing playback
+ history
+ ******************************/
+
+#define MAX_HISTORY_SIZE 10
+#define HISTORY_FILE "history.dat"
 
 /*****************************
  GUI-related globals
@@ -48,6 +56,7 @@
 GtkBuilder *builder;
 GtkWidget  *window;
 GtkWidget  *tlabel;
+GtkWidget  *file_menu;
 GtkObject  *song_length_adjustment;
 
 /****************************
@@ -76,6 +85,12 @@ char current_playback_time[5];
  ****************************/
 HMUSIC music;
 BASS_INFO song_info;
+
+/**************************
+ * Playback history
+ *************************/
+song_list *history;
+GtkMenuItem *history_item_handles[MAX_HISTORY_SIZE];
 
 
 /****************************
