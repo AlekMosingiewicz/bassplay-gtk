@@ -442,7 +442,7 @@ void history_render_menu()
 	GtkMenu *menu = (GtkMenu*) get_file_menu ();
 	if(history->count > 0)
 	{
-		for(i = 0; i < history->count; i++)
+		for(i = history->count-1; i > 0; i--)
 		{
 			song_entry *entry = history->entries[i];
 			GtkMenuItem *item = gtk_menu_item_new_with_label (entry->name);
@@ -609,7 +609,7 @@ save_history_on_exit ()
 	char* home_dir = get_home_dir ();
 	if(history->count > 0)
 	{
-		song_list_to_string (history, history_string);
+		song_list_to_string (history, history_string, 0);
 		sprintf(destpath, "%s/%s", home_dir, HISTORY_FILE);
 		printf("Saving history at: %s", destpath);
 		histfile = fopen(destpath, "w");

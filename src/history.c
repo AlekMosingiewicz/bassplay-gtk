@@ -171,7 +171,7 @@ song_list_last(song_list *list)
 }
 
 char*
-song_list_to_string(song_list *list, char *output_string)
+song_list_to_string(song_list *list, char *output_string, int forward)
 {
 	char entry_string[256];
 	int i;
@@ -181,10 +181,20 @@ song_list_to_string(song_list *list, char *output_string)
 		output_string = malloc(1024);
 
 	position = output_string;
+	if(forward)
 	for(i = 0; i < list->count ; i++)
 	{
 		song_entry *entry = list->entries[i];
 		position+=sprintf(position, "%s\n", song_entry_to_string(entry, entry_string));
+	}
+
+	else
+	{
+		for(i = list->count-1; i > 0; i--)
+		{
+			song_entry *entry = list->entries[i];
+			position+=sprintf(position, "%s\n", song_entry_to_string(entry, entry_string));
+		}
 	}
 
 	return output_string;

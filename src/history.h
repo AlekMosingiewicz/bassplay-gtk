@@ -78,7 +78,7 @@ song_entry* song_list_last(song_list *list);
  **************************/
 
 char* song_entry_to_string(song_entry *entry, char *string);
-char* song_list_to_string(song_list *list, char *output_string);
+char* song_list_to_string(song_list *list, char *output_string, int forward);
 song_list* song_list_from_string(char *input_string);
 
 #endif
