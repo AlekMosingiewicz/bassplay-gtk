@@ -416,6 +416,8 @@ handle_history_on_open (HMUSIC music, const char *path)
 void
 append_history_data(const char *name, const char *path)
 {
+	song_entry *old_entry = history->entries[history->count-1];
+	if(!strcmp(old_entry->name, name)) return;
 	song_entry *entry = song_entry_new (name, path);
 	song_list_append(history, entry);
 }
