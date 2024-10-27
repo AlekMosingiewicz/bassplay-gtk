@@ -60,19 +60,19 @@
 
 /* For testing use the local (not installed) ui file */
 
-
+GtkWidget *glb_window;
+GtkBuilder *glb_builder;
 	
 GtkWidget*
 create_window (void)
 {
 	GtkWidget *window;
-
 	GError* error = NULL;
 
-	builder = gtk_builder_new ();
+	glb_builder = gtk_builder_new ();
 	/** Add main UI **/
-	if ((!gtk_builder_add_from_file (builder, UI_FILE, &error))||
-	    (!gtk_builder_add_from_file (builder, MODULEINFO_UI_FILE, &error)))
+	if ((!gtk_builder_add_from_file (glb_builder, UI_FILE, &error))||
+	    (!gtk_builder_add_from_file (glb_builder, MODULEINFO_UI_FILE, &error)))
 	{
 		g_warning ("Couldn't load builder file: %s", error->message);
 		g_error_free (error);
@@ -80,8 +80,8 @@ create_window (void)
 
 
 	/* This is important */
-	gtk_builder_connect_signals (builder, NULL);
-	window = GTK_WIDGET (gtk_builder_get_object (builder, "window"));
+	gtk_builder_connect_signals (glb_builder, NULL);
+	window = GTK_WIDGET (gtk_builder_get_object (glb_builder, "window"));
 
 	
 	return window;
@@ -106,11 +106,11 @@ main (int argc, char *argv[])
     gdk_threads_init();
 	gtk_init (&argc, &argv);
 
-	window = create_window ();
-	gtk_widget_show (window);
+	glb_window = create_window ();
+	gtk_widget_show (glb_window);
 	if(argc > 1) command_line_play (argv[1]);
 	gtk_main ();
 	BASS_Free(); //free the resources used by the BASS engine
-	g_object_unref (builder); //free GTK builder
+	g_object_unref (glb_builder); //free GTK builder
 	return 0;
 }

@@ -15,8 +15,8 @@ char *glb_file_being_played;
 char *glb_actual_file_name;
 gboolean glb_playback_loop;
 float glb_playback_volume;
-char total_playback_time[5];
-char current_playback_time[5];
+char total_playback_time[256];
+char current_playback_time[256];
 
 
 
@@ -54,10 +54,10 @@ get_filename()
 	{
 		if (glb_file_being_played != NULL)
 			g_free(glb_file_being_played);
-		filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER(filedialog));
-		cpfilename = strdup(filename);
-		glb_basedir = strdup(dirname(cpfilename));
-		glb_file_being_played = strdup(filename);
+		filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER(filedialog));	
+		cpfilename = strdup(filename);		
+		glb_basedir = cpfilename;
+		glb_file_being_played = filename;		
 	}
 		
 	else filename = NULL;
@@ -109,8 +109,10 @@ choose_and_begin_playback (char *filename)
 
 	if(filename == NULL)
 		filename = get_filename();
+	printf("Filename: %s\n", filename);
 	if(filename == NULL) return 0;
 	glb_actual_file_name = get_filename_from_path (strdup(filename));
+	printf("Actual filename: %s\n", glb_actual_file_name);
 	if( glb_music != 0 ) 
 	{
 		stop_playback (glb_music);
@@ -397,6 +399,7 @@ get_info_window ()
 {
 	GtkWindow *info_window;
 	extern GtkBuilder *glb_builder;
+	printf("Getting info window...\n");
 
 	while((info_window = gtk_builder_get_object (glb_builder,"module_info_window"))
 	      == NULL)
