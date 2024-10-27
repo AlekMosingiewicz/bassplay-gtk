@@ -10,11 +10,14 @@
 void 
 gui_periodic_update (void *data)
 {
-	char *oldfilename = strdup(file_being_played);
-	while(!strcmp(oldfilename, file_being_played))
+	extern char* glb_file_being_played;
+	char *oldfilename = strdup(glb_file_being_played);
+	extern HMUSIC glb_music;
+
+	while(!strcmp(oldfilename, glb_file_being_played))
 	{
 		usleep(500000);
-		if (BASS_ChannelIsActive(music) == BASS_ACTIVE_PLAYING)
+		if (BASS_ChannelIsActive(glb_music) == BASS_ACTIVE_PLAYING)
 		{
 			gdk_threads_enter();
 			update_position_slider ();
