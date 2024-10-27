@@ -55,9 +55,10 @@ get_filename()
 		if (glb_file_being_played != NULL)
 			g_free(glb_file_being_played);
 		filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER(filedialog));	
-		cpfilename = strdup(filename);		
-		glb_basedir = cpfilename;
-		glb_file_being_played = filename;		
+		cpfilename = strdup(filename);
+		dirname(cpfilename);
+		glb_basedir = strdup(cpfilename);
+		glb_file_being_played = strdup(filename);		
 	}
 		
 	else filename = NULL;
