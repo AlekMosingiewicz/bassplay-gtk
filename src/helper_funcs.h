@@ -1,3 +1,6 @@
+#ifndef _HELPER_FUNCS_H_
+#define _HELPER_FUNCS_H_
+
 /** Subroutines called by the callback functions **/
 
 #include "globals.h"
@@ -62,3 +65,5 @@ gboolean   validate_session_data(char *message_buffer);
 /** Multithreading **/
 
 pthread_t  launch_detached_thread(void* data, void(*thread_func)(void*));
+
+#endif

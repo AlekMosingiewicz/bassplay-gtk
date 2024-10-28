@@ -38,9 +38,11 @@ destroy (GtkWidget *widget, gpointer data)
 void 
 on_stop_button_click (GtkWidget *widget, gpointer data)
 {
-	if(music)
+	extern HMUSIC glb_music;
+
+	if(glb_music)
 	{
-		stop_playback(music);
+		stop_playback(glb_music);
 		update_label_text (PLAYBACK_STATE_STOPPED);
 		update_position_slider ();
 		update_time_label (0);
@@ -70,36 +72,42 @@ on_menu_file_open_click (GtkWidget* widget, gpointer data)
 void
 on_play_button_click (GtkWidget* widget, gpointer data)
 {
-	if(music == 0)
+	extern char* glb_file_being_played;
+	extern HMUSIC glb_music;
+	extern pthread_t glb_update_thread;
+
+	if(glb_music == 0)
 	{
-		if(file_being_played != NULL)
+		if(glb_file_being_played != NULL)
 		{
-			music = start_playback(file_being_played);
+			glb_music = start_playback(glb_file_being_played);
 			populate_gui_with_module_data ();
-			update_thread = launch_detached_thread (NULL, gui_periodic_update);
+			glb_update_thread = launch_detached_thread (NULL, gui_periodic_update);
 		}
 		else if(!choose_and_begin_playback (NULL) )
 		{
 			populate_gui_with_module_data ();
 			handle_bass_error (NULL);
-			update_thread = launch_detached_thread (NULL, gui_periodic_update);			
+			glb_update_thread = launch_detached_thread (NULL, gui_periodic_update);			
 			return;
 		}
 
 	}
-	else if (BASS_ChannelIsActive(music) == BASS_ACTIVE_PAUSED)
-		BASS_ChannelPlay(music, FALSE);
-	else if (BASS_ChannelIsActive(music) == BASS_ACTIVE_STOPPED)
-		BASS_ChannelPlay(music, FALSE);
+	else if (BASS_ChannelIsActive(glb_music) == BASS_ACTIVE_PAUSED)
+		BASS_ChannelPlay(glb_music, FALSE);
+	else if (BASS_ChannelIsActive(glb_music) == BASS_ACTIVE_STOPPED)
+		BASS_ChannelPlay(glb_music, FALSE);
 	update_label_text (PLAYBACK_STATE_PLAYING);
 }
 
 void
 on_pause_button_click (GtkWidget* widget, gpointer data)
 {
-	if(music!=0)
+	extern HMUSIC glb_music;
+
+	if(glb_music!=0)
 	{
-		pause_playback(music);
+		pause_playback(glb_music);
 		update_label_text (PLAYBACK_STATE_PAUSED);
 	}
 }
@@ -117,12 +125,14 @@ void
 on_volume_control_change (GtkWidget *widget, gpointer data)
 {
 	float volume;
+	extern float glb_playback_volume;
+	extern HMUSIC glb_music;
 	
-	if(music!=0)
+	if(glb_music!=0)
 	{
 		volume = gtk_scale_button_get_value (GTK_SCALE_BUTTON(widget));
-		BASS_ChannelSetAttribute(music, BASS_ATTRIB_VOL, volume);
-		playback_volume = volume;
+		BASS_ChannelSetAttribute(glb_music, BASS_ATTRIB_VOL, volume);
+		glb_playback_volume = volume;
 	}
 }
 
@@ -130,22 +140,27 @@ void
 on_slider_change(GtkRange *widget, GtkScrollType scroll, gdouble value, 
                        gpointer user_data)
 {
-	if(music!=0)
+	extern GtkObject *glb_song_length_adjustment;
+	extern HMUSIC glb_music;
+
+	if(glb_music!=0)
 	{
-		if(BASS_ChannelIsActive(music)==BASS_ACTIVE_PLAYING)
-		pause_playback (music);
-		gtk_adjustment_set_value (GTK_ADJUSTMENT(song_length_adjustment),value);
+		if(BASS_ChannelIsActive(glb_music)==BASS_ACTIVE_PLAYING)
+		pause_playback (glb_music);
+		gtk_adjustment_set_value (GTK_ADJUSTMENT(glb_song_length_adjustment),value);
 		update_time_label (value);
-		BASS_ChannelSetPosition(music, BASS_ChannelSeconds2Bytes
-		                        (music, value), BASS_POS_BYTE);
+		BASS_ChannelSetPosition(glb_music, BASS_ChannelSeconds2Bytes
+		                        (glb_music, value), BASS_POS_BYTE);
 	}
 }
 
 gboolean
 on_slider_release (GtkWidget *widget, gpointer data)
 {
-	if(BASS_ChannelIsActive(music) == BASS_ACTIVE_PAUSED)
-	BASS_ChannelPlay(music, FALSE);
+	extern HMUSIC glb_music;
+
+	if(BASS_ChannelIsActive(glb_music) == BASS_ACTIVE_PAUSED)
+	BASS_ChannelPlay(glb_music, FALSE);
 	return TRUE;
 }
 
@@ -166,9 +181,11 @@ on_label_click (GtkWidget *widget, gpointer data)
 void
 on_loop_toggled(GtkWidget *widget, gpointer data)
 {
+	extern gboolean glb_playback_loop;
+
 	GtkCheckButton *button = (GtkCheckButton*) widget; 
 	gboolean toggled = gtk_toggle_button_get_active (button);
-	playback_loop = toggled;
+	glb_playback_loop = toggled;
 }
 
 /* BASS callbacks */
@@ -177,9 +194,12 @@ on_loop_toggled(GtkWidget *widget, gpointer data)
 void 
 CALLBACK on_music_end(HSYNC hmusic, DWORD channel, DWORD data, void *user)
 {
-	if(!playback_loop)
+	extern gboolean glb_playback_loop;
+	extern HMUSIC glb_music;
+
+	if(!glb_playback_loop)
 	{
-			stop_playback (music);
+			stop_playback (glb_music);
 			update_position_slider ();
 			update_label_text (PLAYBACK_STATE_STOPPED);
 			update_time_label (0);

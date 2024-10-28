@@ -6,6 +6,19 @@
 #include "callbacks.h"
 
 
+/** global variables */
+GtkObject *glb_song_length_adjustment;
+HMUSIC glb_music;
+char *glb_basedir;
+pthread_t glb_update_thread;
+char *glb_file_being_played;
+char *glb_actual_file_name;
+gboolean glb_playback_loop;
+float glb_playback_volume;
+char total_playback_time[256];
+char current_playback_time[256];
+
+
 
 /**********************************
  Open the file open dialog
@@ -18,12 +31,13 @@ get_filename()
 {
 	char *filename;
 	char *cpfilename = NULL;
+	GtkWidget *glb_window;
 	GtkFileFilter *filter = create_standard_mod_filter ();
 	GtkFileFilter *generic_filter = create_generic_file_filter ();
 	
 	GtkWidget* filedialog = gtk_file_chooser_dialog_new
 							("Choose the music module",
-	                          window,
+	                          glb_window,
 	                          GTK_FILE_CHOOSER_ACTION_OPEN,
 	                          GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
 	                          GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
@@ -32,18 +46,19 @@ get_filename()
 	gtk_file_chooser_add_filter(filedialog, filter);
 	gtk_file_chooser_add_filter (filedialog, generic_filter);
 	
-	if ( basedir != NULL )
+	if ( glb_basedir != NULL )
 		gtk_file_chooser_set_current_folder (GTK_FILE_CHOOSER(filedialog),
-			                                     basedir);
+			                                     glb_basedir);
 	
 	if(gtk_dialog_run(GTK_DIALOG(filedialog)) == GTK_RESPONSE_ACCEPT)
 	{
-		if (file_being_played != NULL)
-			g_free(file_being_played);
-		filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER(filedialog));
+		if (glb_file_being_played != NULL)
+			g_free(glb_file_being_played);
+		filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER(filedialog));	
 		cpfilename = strdup(filename);
-		basedir = strdup(dirname(cpfilename));
-		file_being_played = strdup(filename);
+		dirname(cpfilename);
+		glb_basedir = strdup(cpfilename);
+		glb_file_being_played = strdup(filename);		
 	}
 		
 	else filename = NULL;
@@ -91,22 +106,25 @@ create_generic_file_filter ()
 int 
 choose_and_begin_playback (char *filename)
 {
+	extern HMUSIC glb_music;
+
 	if(filename == NULL)
 		filename = get_filename();
+	printf("Filename: %s\n", filename);
 	if(filename == NULL) return 0;
-	actual_file_name = get_filename_from_path (strdup(filename));
-	if( music != 0 ) 
+	glb_actual_file_name = get_filename_from_path (strdup(filename));
+	printf("Actual filename: %s\n", glb_actual_file_name);
+	if( glb_music != 0 ) 
 	{
-		stop_playback (music);
-		BASS_MusicFree(music);
+		stop_playback (glb_music);
+		BASS_MusicFree(glb_music);
 	}
-	if((music = start_playback(filename)) != 0)
+	if((glb_music = start_playback(filename)) != 0)
 	{
-		update_thread = launch_detached_thread (NULL, gui_periodic_update);
-		if(playback_volume > -1)
-			BASS_ChannelSetAttribute(music, BASS_ATTRIB_VOL, playback_volume);
-		BASS_ChannelSetSync(music, BASS_SYNC_END, 0, &on_music_end, NULL);
-		handle_history_on_open (music, filename);		
+		glb_update_thread = launch_detached_thread (NULL, gui_periodic_update);
+		if(glb_playback_volume > -1)
+			BASS_ChannelSetAttribute(glb_music, BASS_ATTRIB_VOL, glb_playback_volume);
+		BASS_ChannelSetSync(glb_music, BASS_SYNC_END, 0, &on_music_end, NULL);
 		return TRUE;
 	}
 	
@@ -122,7 +140,6 @@ choose_and_begin_playback (char *filename)
 void
 populate_gui_with_module_data()
 {
-	tlabel = GTK_LABEL(gtk_builder_get_object (builder, "currtimelabel"));
 	update_label_text (PLAYBACK_STATE_PLAYING);
 	populate_module_info_window ();
 	setup_music_slider ();
@@ -136,8 +153,10 @@ populate_gui_with_module_data()
 void
 set_total_time_label (float secs)
 {
+	extern GtkBuilder *glb_builder;
+
 	GtkWidget *ttimelabel = GTK_LABEL(gtk_builder_get_object 
-	                                  (builder, "totaltimelabel"));
+	                                  (glb_builder, "totaltimelabel"));
 	mins_from_secs (secs, total_playback_time);
 	gtk_label_set_text (ttimelabel, total_playback_time);
 }
@@ -156,7 +175,7 @@ command_line_play (char *filename)
 		return;
 	}
 	populate_gui_with_module_data ();
-	update_thread = launch_detached_thread (NULL, gui_periodic_update);
+	glb_update_thread = launch_detached_thread (NULL, gui_periodic_update);
 	update_label_text (PLAYBACK_STATE_PLAYING);
 }
 
@@ -169,9 +188,10 @@ void
 handle_bass_error (void(*handle_error_func)(int))
 {
 	GtkWidget *errordialog;
+	extern GtkWidget *glb_window;
 	if(BASS_ErrorGetCode()) 
 		{
-			errordialog = gtk_message_dialog_new(window,
+			errordialog = gtk_message_dialog_new(glb_window,
 		                                     GTK_DIALOG_DESTROY_WITH_PARENT,
 		                                     GTK_MESSAGE_ERROR,
 		                                     GTK_BUTTONS_CLOSE,
@@ -214,11 +234,12 @@ update_position_slider ()
 {
     DWORD position;
 	gdouble seconds;
+	extern HMUSIC glb_music;
 
-	position =	BASS_ChannelGetPosition(music, BASS_POS_BYTE);
-	seconds  = (gdouble) BASS_ChannelBytes2Seconds(music, position);
+	position =	BASS_ChannelGetPosition(glb_music, BASS_POS_BYTE);
+	seconds  = (gdouble) BASS_ChannelBytes2Seconds(glb_music, position);
 
-	gtk_adjustment_set_value(GTK_ADJUSTMENT (song_length_adjustment),
+	gtk_adjustment_set_value(GTK_ADJUSTMENT (glb_song_length_adjustment),
 		                         seconds);
 }
 
@@ -233,13 +254,15 @@ update_label_text (char *playback_state)
 	GtkWidget *title_label;
 	char  message[1024];
 	char  *song_title;
+	extern GtkBuilder *glb_builder;
+	extern HMUSIC glb_music;
 
-	title_label = GTK_LABEL(gtk_builder_get_object (builder,
+	title_label = GTK_LABEL(gtk_builder_get_object (glb_builder,
 	                                                "titlelabel"));
-	song_title = BASS_ChannelGetTags(music,BASS_TAG_MUSIC_NAME);
+	song_title = BASS_ChannelGetTags(glb_music,BASS_TAG_MUSIC_NAME);
 	if(song_title!=NULL)
-	if((!strlen(song_title))&&(actual_file_name != NULL)) 
-		song_title = actual_file_name;
+	if((!strlen(song_title))&&(glb_actual_file_name != NULL)) 
+		song_title = glb_actual_file_name;
 	sprintf(message, "%s: %s", playback_state, song_title);
 	gtk_label_set_label (title_label, message);	
 	
@@ -256,23 +279,25 @@ setup_music_slider ()
 	GtkWidget *slider;
 	DWORD length;
 	float length_sec;
+	extern GtkBuilder *glb_builder;
+	extern HMUSIC glb_music;
 
-	slider = (GtkWidget*) gtk_builder_get_object (builder, "songslider");
-	if(song_length_adjustment !=NULL)
+	slider = (GtkWidget*) gtk_builder_get_object (glb_builder, "songslider");
+	if(glb_song_length_adjustment !=NULL)
 	{
-		gtk_object_destroy (song_length_adjustment);
+		gtk_object_destroy (glb_song_length_adjustment);
 	}
 
-	length = BASS_ChannelGetLength(music, BASS_POS_BYTE);
-	length_sec = BASS_ChannelBytes2Seconds(music, length);
-	song_length_adjustment = gtk_adjustment_new(0,
+	length = BASS_ChannelGetLength(glb_music, BASS_POS_BYTE);
+	length_sec = BASS_ChannelBytes2Seconds(glb_music, length);
+	glb_song_length_adjustment = gtk_adjustment_new(0,
                                                 0,
                                                 length_sec,
                                                 0.1,
                                                 1,
                                                 0);
 	gtk_range_set_adjustment (GTK_RANGE(slider),
-	                          GTK_ADJUSTMENT (song_length_adjustment));
+	                          GTK_ADJUSTMENT (glb_song_length_adjustment));
 	set_total_time_label(length_sec);
 	
 }
@@ -305,20 +330,18 @@ launch_detached_thread (void* data, void(*thread_func)(void*))
 void
 init_variables ()
 {
-   music = 0; //init the music handle
-   basedir = NULL;
-   update_thread = NULL;	
-   song_length_adjustment = NULL;
-   file_being_played = NULL;
-   init_history_on_startup ();
-   actual_file_name = NULL;
-   playback_loop = FALSE;
+   glb_music = 0; //init the music handle
+   glb_basedir = NULL;
+   glb_song_length_adjustment = NULL;
+   glb_file_being_played = NULL;
+   glb_actual_file_name = NULL;
+   glb_playback_loop = FALSE;
    if(setup_session () < 0)
 		fprintf(stderr, "Can't find session data file;"
 		        "path to resource:%s/%s", SESSION_DATA_DIR,
 		        SESSION_DATA_FILE);
-   update_thread = 0;
-   playback_volume = -1;
+   glb_update_thread = 0;
+   glb_playback_volume = -1;
 } 
 
 void
@@ -328,12 +351,13 @@ populate_general_info_window ()
 	char* position = general_info;
 	char  length[256];
 	char* filename;
+	extern HMUSIC glb_music;
 
-	if(actual_file_name == NULL) filename = get_filename_from_path 
-		(strdup(file_being_played));
-	else filename = actual_file_name;
-	mins_from_secs (BASS_ChannelBytes2Seconds(music,
-	                                          BASS_ChannelGetLength(music,
+	if(glb_actual_file_name == NULL) filename = get_filename_from_path 
+		(strdup(glb_file_being_played));
+	else filename = glb_actual_file_name;
+	mins_from_secs (BASS_ChannelBytes2Seconds(glb_music,
+	                                          BASS_ChannelGetLength(glb_music,
 	                                                                BASS_POS_BYTE)),
 	                length);
 
@@ -350,13 +374,14 @@ populate_general_info_window ()
 void 
 populate_sample_view()
 {
-	char *sample;
-	char* sample_text = malloc(1024*5); // -> allocating the sample text in the stack frame
-	int  n=0;                                             // caused segmentation fault errors, so I moved 
-	char*  position=sample_text;          // it to the heap
+	char  *sample;
+	char  *sample_text = malloc(1024*5); // -> allocating the sample text in the stack frame
+	int    n=0;                          // caused segmentation fault errors, so I moved 
+	char*  position=sample_text;        // it to the heap
+	extern HMUSIC glb_music;
 
 	printf("Populating sample window...");
-	while(sample = BASS_ChannelGetTags(music, BASS_TAG_MUSIC_SAMPLE+n))
+	while(sample = BASS_ChannelGetTags(glb_music, BASS_TAG_MUSIC_SAMPLE+n))
 	      {
 			  position += sprintf(position, "%d : %s\n", n, sample);
 			  n++;
@@ -375,10 +400,13 @@ GtkWindow*
 get_info_window ()
 {
 	GtkWindow *info_window;
-	while((info_window = gtk_builder_get_object (builder,"module_info_window"))
+	extern GtkBuilder *glb_builder;
+	printf("Getting info window...\n");
+
+	while((info_window = gtk_builder_get_object (glb_builder,"module_info_window"))
 	      == NULL)
 	{
-	    gtk_builder_add_from_file (builder, MODULEINFO_UI_FILE, NULL);
+	    gtk_builder_add_from_file (glb_builder, MODULEINFO_UI_FILE, NULL);
 		populate_module_info_window ();
 	}
    gtk_window_deiconify (info_window);
@@ -392,8 +420,10 @@ get_info_window ()
 void
 populate_message_text_view ()
 {
+	extern HMUSIC glb_music;
+
 	printf("Populating message window...\n");
-	char *message_text = BASS_ChannelGetTags (music, BASS_TAG_MUSIC_MESSAGE);
+	char *message_text = BASS_ChannelGetTags (glb_music, BASS_TAG_MUSIC_MESSAGE);
 	if(message_text != NULL)
 		populate_text_view ("moduleinfo_message_textview", message_text);
 	else populate_text_view ("moduleinfo_message_textview", "No message.");
@@ -483,8 +513,9 @@ history_clear_menu()
 static void
 populate_text_view (char *id, char *text)
 {
+	extern GtkBuilder *glb_builder;
 	GtkTextView *textview = GTK_TEXT_VIEW ( gtk_builder_get_object 
-	                                       ( builder,
+	                                       ( glb_builder,
 	                                         id));
 	GtkTextBuffer *buffer = gtk_text_view_get_buffer (textview);
 	GtkTextIter iterator;
@@ -514,11 +545,13 @@ populate_module_info_window()
 void
 restart_playback()
 {
-	BASS_ChannelSetPosition(music, MAKELONG(0,0), BASS_POS_MUSIC_ORDER|
+	extern HMUSIC glb_music;
+
+	BASS_ChannelSetPosition(glb_music, MAKELONG(0,0), BASS_POS_MUSIC_ORDER|
 	                   BASS_MUSIC_POSRESET);
 	update_position_slider ();
 	update_time_label (0);
-	BASS_ChannelPlay(music, FALSE);
+	BASS_ChannelPlay(glb_music, FALSE);
 }
 	
 
@@ -531,12 +564,15 @@ restart_playback()
 void
 update_time_label(float secs)
 {
+	extern GtkBuilder *glb_builder;
+	extern HMUSIC glb_music;
+
 	if(secs < 0)
 	 secs = 
-		BASS_ChannelBytes2Seconds(music,
-		                          BASS_ChannelGetPosition(music,BASS_POS_BYTE));
+		BASS_ChannelBytes2Seconds(glb_music,
+		                          BASS_ChannelGetPosition(glb_music, BASS_POS_BYTE));
 	GtkWidget *tlabel = GTK_LABEL(gtk_builder_get_object 
-	                              (builder, "currtimelabel"));
+	                              (glb_builder, "currtimelabel"));
 	
 	mins_from_secs (secs, current_playback_time);
 	gtk_label_set_text(tlabel, current_playback_time);
@@ -552,7 +588,9 @@ void
 show_info_quick (char* message, GtkMessageType type)
 {
 	GtkWidget *messagedialog;
-	messagedialog = gtk_message_dialog_new(window,
+	extern GtkWidget *glb_window;
+
+	messagedialog = gtk_message_dialog_new(glb_window,
 		                                     GTK_DIALOG_DESTROY_WITH_PARENT,
 		                                     type,
 		                                     GTK_BUTTONS_CLOSE,
@@ -582,7 +620,7 @@ check_file_exists (char *filename)
  *************************************/
 
 int 
-save_session_data(char* filename)
+save_session_data(char *filename)
 {
 	FILE* ofile;
 	struct stat dir;
@@ -594,8 +632,8 @@ save_session_data(char* filename)
 	sprintf(output_path, "%s/%s", home_dir, filename);
 	if((ofile = fopen(output_path, "w")) == NULL)
 		return -1;
-	printf("Saving file being played: %s\n", file_being_played);
-	fprintf(ofile, "%s %s", basedir, file_being_played);
+	printf("Saving file being played: %s\n", glb_file_being_played);
+	fprintf(ofile, "%s %s", glb_basedir, glb_file_being_played);
 	fclose(ofile);
 	g_free(home_dir);
 	return 0;
@@ -672,7 +710,7 @@ validate_session_data(char *message_buffer)
 	char local_msg[256] = "\0";
 	
 	gboolean status = TRUE;	
-	sprintf(fullpath, "%s/%s", basedir, file_being_played);
+	sprintf(fullpath, "%s/%s", glb_basedir, glb_file_being_played);
 
 	if(!check_file_exists (fullpath))
 	{
@@ -702,8 +740,8 @@ restore_session_data (char* filename)
 	fscanf(ifile, "%s", tmp_d);
 	fscanf(ifile, "%s", tmp_f);
 	fclose(ifile);
-	basedir = strdup(tmp_d);
-	file_being_played = strdup(tmp_f);
+	glb_basedir = strdup(tmp_d);
+	glb_file_being_played = strdup(tmp_f);
 	return 1;
 }
 
@@ -745,7 +783,7 @@ setup_session ()
 int
 check_if_session_data_is_empty ()
 {
-	if((file_being_played == NULL) || (basedir == NULL)) 
+	if((glb_file_being_played == NULL) || (glb_basedir == NULL)) 
 		return -1;
 	return 0;
 }
