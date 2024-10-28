@@ -13,10 +13,10 @@
  UI Files
  ****************************/
 
-//#define UI_FILE PACKAGE_DATA_DIR "/ui/bassplay_gtk.ui"
-#define UI_FILE "src/bassplay_gtk.ui"
-#define MODULEINFO_UI_FILE "src/module_info.ui"
-//#define MODULEINFO_UI_FILE PACKAGE_DATA_DIR "/ui/module_info.ui"
+#define UI_FILE PACKAGE_DATA_DIR "/ui/bassplay_gtk.ui"
+//#define UI_FILE "src/bassplay_gtk.ui"
+//#define MODULEINFO_UI_FILE "src/module_info.ui"
+#define MODULEINFO_UI_FILE PACKAGE_DATA_DIR "/ui/module_info.ui"
 
 /*****************************
  Playback states
